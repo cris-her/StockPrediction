@@ -2,24 +2,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import torch
+
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import plotly.figure_factory as ff
-sns.set_style('whitegrid')
-plt.style.use("fivethirtyeight")
+sns.set_style('darkgrid')
 import os
 os.environ['KMP_WARNINGS'] = 'off'
 
-from sklearn.preprocessing import MinMaxScaler
 
 
-class Predict(object):
-    def __init__(self):
-        pass
+class Classifier(object):
+    def __init__(self, model):
+        self.model = model
 
-    def train(self, train_data, model, show_progress = True):
+
+    def train(self, train_data, params, show_progress = True):
         '''
             Input: train_data - list of input values (numpy array) and target values
                                 (numpy array) of training data
@@ -27,23 +26,24 @@ class Predict(object):
                    show_progress - if the training process is showed (boolean)
 
         '''
+        self.x_train, self.y_train = train_data
+        criterion = torch.nn.MSELoss(reduction='mean')
+        optimiser = torch.optim.Adam(self.model.parameters(), lr=params.lr)
+        hist = np.zeros(params.n_epochs)
+        self.model.train()
+        for epoch in range(params.n_epochs):
+            y_train_pred = self.model(self.x_train)
+            loss = criterion(y_train_pred, self.y_train)
+            optimiser.zero_grad()
+            loss.backward()
+            optimiser.step()
+            print(f'Epoch: {epoch+1}/{params.n_epochs}\tMSE loss: {loss.item():.5f}')
+            hist[epoch] = loss.item()
+
+        return hist
 
 
-        self.x_train = train_data[0]
-        self.y_train = train_data[1]
-        history = model.fit(self.x_train, self.y_train, batch_size = 1, epochs = 1)
-        self.model = model
-
-       # if show_progress:
-       #     plt.plot(history.history['loss'])
-       #     plt.title('RMS loss')
-       #     plt.ylabel('$\mathcal{L}$')
-       #     plt.xlabel('epoch')
-       #     plt.grid('on')
-       #     plt.show()
-
-
-    def predict(self, test_data, scaler, data_scaled = True, show_predictions = True):
+    def predict(self, test_data, scaler, data_scaled = True):
         '''
             Input: test_data - list of input values (numpy array) and target values
                                (numpy array) of validation data
@@ -53,19 +53,12 @@ class Predict(object):
             Output: predictions - numpy array of the predicted values
         '''
 
-        try:
-            model = self.model
-        except Exception as e:
-            print('Unable to load model, train the model before predicting!')
-            return None
 
-        self.x_test = test_data[0]
-        self.y_test = test_data[1]
-        predictions = model.predict(self.x_test)
+        self.x_test, self.y_test = test_data
+        self.model.eval()
+        predictions = self.model(self.x_test).detach().numpy()
         if data_scaled:
             predictions = scaler.inverse_transform(predictions)
-
-        #rmse = np.sqrt(np.mean(((predictions - self.y_test) ** 2)))
 
         return predictions
 

@@ -4,15 +4,18 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-sns.set_style('whitegrid')
+from sklearn.preprocessing import MinMaxScaler
+from torch.utils.data import DataLoader, Dataset
+import torch
+sns.set_style('darkgrid')
 plt.style.use("fivethirtyeight")
 
-from sklearn.preprocessing import MinMaxScaler
 
 
-class Dataset(object):
+
+class GetDataset(object):
     def __init__(self, df, feature='Adj Close'):
-        super(Dataset, self).__init__()
+        super(GetDataset, self).__init__()
         self.df = df
         self.feature = feature
 
@@ -24,7 +27,7 @@ class Dataset(object):
         data = self.df.filter([str(self.feature)])
         self.data_values = data.values
         if scale:
-            self.scaler = MinMaxScaler(feature_range=(0, 1))
+            self.scaler = MinMaxScaler(feature_range=(-1, 1))
             self.dataset = self.scaler.fit_transform(self.data_values)
 
         else:
@@ -52,7 +55,7 @@ class Dataset(object):
         x_train, y_train = [], []
         for i in range(time_period, len(self.train_data)):
             x_train.append(self.train_data[i-time_period:i, 0])
-            y_train.append(self.train_data[i, 0])
+            y_train.append(self.train_data[i, :])
 
         self.y_train = np.array(y_train)
         self.x_train = np.reshape(np.array(x_train), (np.array(x_train).shape[0], np.array(x_train).shape[1], 1))
@@ -68,6 +71,15 @@ class Dataset(object):
         print(f'Shape of test data: (x, y) = ({np.shape(self.x_test)}, {np.shape(self.y_test)})')
         return [self.x_train, self.y_train], [self.x_test, self.y_test], train_data_size
 
+
+    def get_torchdata(self):
+        self.x_train_tensor = torch.from_numpy(self.x_train).type(torch.Tensor)
+        self.x_test_tensor = torch.from_numpy(self.x_test).type(torch.Tensor)
+
+        self.y_train_tensor = torch.from_numpy(self.y_train).type(torch.Tensor)
+        self.y_test_tensor = torch.from_numpy(self.y_test).type(torch.Tensor)
+
+        return [self.x_train_tensor, self.y_train_tensor], [self.x_test_tensor, self.y_test_tensor]
 
 
 

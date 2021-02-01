@@ -1,19 +1,69 @@
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
 
-def keras_lstm(x_train):
+import torch.nn as nn
+import torch
+import os
+
+class ModelUtils:
     '''
-        Input: x_train - numpy array of the training set
-
-        Output: model - compiled keras model
+    A utility class to save and load model weights
     '''
+    def save_model(self, save_path, model):
+        root, ext = os.path.splitext(save_path)
+        if not ext:
+            save_path = root + '.pth'
+        try:
+            torch.save(model.state_dict(), save_path)
+            print(f'Successfully saved to model to "{save_path}"!')
+        except Exception as e:
+            print(f'Unable to save model, check save path!')
+            print(f'Exception:\n{e}')
+            return None
 
-    model = Sequential()
-    model.add(LSTM(50, return_sequences=True, input_shape= (x_train.shape[1], 1)))
-    model.add(LSTM(50, return_sequences= False))
-    model.add(Dense(25))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mean_squared_error')
-    #model.summary()
-    return model
+    def load_model(self, load_path, model):
+        try:
+            model.load_state_dict(torch.load(load_path))
+            print(f'Successfully loaded the model from path "{load_path}"')
+
+        except Exception as e:
+            print(f'Unable to load the weights, check if different model or incorrect path!')
+            print(f'Exception:\n{e}')
+            return None
+
+class rnn_params:
+    rnn_type = 'gru'
+    input_dim = 1
+    hidden_dim = 32
+    num_layers = 2
+    output_dim = 1
+    n_epochs = 100
+    lr = 0.01
+
+
+class TorchRNN(nn.Module):
+    def __init__(self, rnn_type, input_dim, hidden_dim, num_layers, output_dim):
+        super(TorchRNN, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.rnn_type = rnn_type
+        if rnn_type == 'lstm':
+            self.rnn = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
+        elif rnn_type == 'gru':
+            self.rnn = nn.GRU(input_dim, hidden_dim, num_layers, batch_first=True)
+        else:
+            raise KeyError('Invalid RNN type, select "lstm" or "gru"!')
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).requires_grad_()
+        if self.rnn_type == 'lstm':
+            c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).requires_grad_()
+            out, (hn, cn) = self.rnn(x, (h0.detach(), c0.detach()))
+        elif self.rnn_type == 'gru':
+            out, (hn) = self.rnn(x, (h0.detach()))
+        else:
+            raise KeyError('Invalid RNN type, select "lstm" or "gru"!')
+        out = self.fc(out[:, -1, :])
+        return out
+
+
 
