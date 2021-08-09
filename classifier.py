@@ -43,7 +43,7 @@ class Classifier(object):
         return hist
 
 
-    def predict(self, test_data, scaler, data_scaled = True):
+    def predict(self, test_data, scaler, data_scaled=True):
         '''
             Input: test_data - list of input values (numpy array) and target values
                                (numpy array) of validation data
@@ -71,7 +71,7 @@ def plot_predictions(df, train_data_size, predictions):
     colors = ['#579BF5', '#C694F6', '#F168F1']
     fig = go.Figure()
     train = df[:train_data_size]
-    valid = df[train_data_size:]
+    valid = df[train_data_size:][:-2]
     valid['Predictions'] = predictions
     x_train = [str(train.index[i]).split()[0] for i in range(len(train))]
     x_val = [str(valid.index[i]).split()[0] for i in range(len(valid))]

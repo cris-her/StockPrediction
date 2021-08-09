@@ -4,10 +4,10 @@ Transformer script based on the work of A. Vaswani et. al. (2017) in
 in https://medium.com/the-dl/transformers-from-scratch-in-pytorch-8777e346ca51
 '''
 
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
+
 
 def scaled_dot_product_attention(query, key, value):
     '''
@@ -17,9 +17,9 @@ def scaled_dot_product_attention(query, key, value):
     INPUT: query, key, value - input data of size (batch_size, seq_length, num_features)
     '''
 
-    temp = query.bmm(key.transpose(1,2))
-    scale = query.size(-1)**0.5
-    softmax = f.softmax(temp / scale, dim = -1)
+    temp = query.bmm(key.transpose(1, 2))
+    scale = query.size(-1) ** 0.5
+    softmax = f.softmax(temp / scale, dim=-1)
     attention = softmax.bmm(value)
     return attention
 
@@ -45,10 +45,12 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, query, key, value):
         multiheads_out = [
-            scaled_dot_product_attention(self.query(query), self.key(key), self.value(value)) for _ in range(self.num_heads)
+            scaled_dot_product_attention(self.query(query), self.key(key), self.value(value)) for _ in
+            range(self.num_heads)
         ]
         out = self.linear(torch.cat(multiheads_out, dim=-1))
         return out
+
 
 def positioning_encoding(seq_length, model_dim):
     '''
@@ -62,12 +64,14 @@ def positioning_encoding(seq_length, model_dim):
     OUTPUT: Encoded relative positions of the data points in the input sequence
     '''
     position = torch.arange(seq_length, dtype=torch.float).reshape(1, -1, 1)
-    dimension = torch.arange(model_dim, dtype=torch.float).reshape(1, 1, -1)
-    phase = (position / 1e4) ** (dimension // model_dim)
-    return torch.where(dimension.long() % 2 == 0, -torch.sin(phase), torch.cos(phase))
+    frequencies = 1e-4 ** (2 * (torch.arange(model_dim, dtype=torch.float) // 2) / model_dim).reshape(1, 1, -1)
+    pos_enc = position * frequencies
+    pos_enc[:, ::2] = torch.cos(pos_enc[:, ::2])
+    pos_enc[:, 1::2] = torch.sin(pos_enc[:, 1::2])
+    return pos_enc
 
 
-def forward(input_dim = 512, forward_dim = 2048):
+def forward(input_dim=512, forward_dim=2048):
     '''
     Forward class for the feed-forward layer that is following the multihead
     attention layers
@@ -82,6 +86,7 @@ def forward(input_dim = 512, forward_dim = 2048):
     )
     return forward_layer
 
+
 class ResidualConnection(nn.Module):
     '''
     Class for the residual connections for the encoder and the decoder, used for each multihead attention layer
@@ -91,7 +96,7 @@ class ResidualConnection(nn.Module):
     OUTPUT: Normalized and processed tensors added to the input tensors
     '''
 
-    def __init__(self, layer, dimension, dropout = 0.2):
+    def __init__(self, layer, dimension, dropout=0.2):
         super().__init__()
         self.layer = layer
         self.norm = nn.LayerNorm(dimension)
@@ -100,13 +105,14 @@ class ResidualConnection(nn.Module):
     def forward(self, *X):
         return self.norm(X[-1] + self.dropout(self.layer(*X)))
 
+
 class Encoder(nn.Module):
     '''
     The encoder of the transformer model, first computes the relative positions of the inputs, then feeds it into
     the multihead attention followed by the feed-forward layer, both with normalized residual connections
     '''
 
-    def __init__(self, n_layers = 6, model_dim = 512, num_heads = 8, forward_dim = 2048, dropout = 0.2):
+    def __init__(self, n_layers=6, model_dim=512, num_heads=8, forward_dim=2048, dropout=0.2):
         super().__init__()
 
         self.n_layers = n_layers
@@ -135,9 +141,7 @@ class Encoder(nn.Module):
         for _ in range(self.n_layers):
             att_out = self.multihead_attention(out, out, out)
             out = self.feed_forward(att_out)
-
         return out
-
 
 
 class Decoder(nn.Module):
@@ -149,7 +153,7 @@ class Decoder(nn.Module):
     to the linear output layer.
     '''
 
-    def __init__(self, n_layers = 6, model_dim = 512, output_dim = 512, num_heads = 8, forward_dim = 2048, dropout = 0.2):
+    def __init__(self, n_layers=6, model_dim=512, output_dim=512, num_heads=8, forward_dim=2048, dropout=0.2):
         super().__init__()
 
         self.n_layers = n_layers
@@ -203,21 +207,22 @@ class TransformerModel(nn.Module):
     otherwise freely tunable parameters
     '''
 
-    def __init__(self, n_layers_enc = 6, n_layers_dec = 6, model_dim = 512, output_dim = 512,
-                 num_heads = 6, forward_dim = 2048, dropout = 0.2):
+    def __init__(self, n_layers=6, model_dim=512, output_dim=512,
+                 num_heads=6, forward_dim=2048, dropout=0.2):
         super().__init__()
-        self.encoder = Encoder(n_layers_enc, model_dim, num_heads, forward_dim, dropout)
-        self.decoder = Decoder(n_layers_dec, model_dim, output_dim, num_heads, forward_dim, dropout)
+        self.encoder = Encoder(n_layers, model_dim, num_heads, forward_dim, dropout)
+        self.flatten = nn.Flatten()
+        self.linear = nn.Linear(16, output_dim)
+        self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, X, Y):
+    def forward(self, X):
         enc_out = self.encoder(X)
-        dec_out = self.decoder(Y, enc_out)
-        return dec_out
+        #flat = self.flatten(enc_out)
+        out = self.relu(self.linear(enc_out[:, -1, :]))
+        return out
 
 
 # Test with random tensors
-X = torch.rand(32, 64, 32)
-Y = torch.rand(32, 64, 32)
-out = TransformerModel(model_dim = 32, output_dim=50)(X, Y)
-print(out.shape)
-
+#X = torch.rand(32, 64, 32)
+#out = TransformerModel(model_dim=32, output_dim=50)(X)
+#print(out.shape)
