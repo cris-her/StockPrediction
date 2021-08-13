@@ -2,6 +2,7 @@
 import torch.nn as nn
 import torch
 import os
+import transformer
 
 class ModelUtils:
     '''
@@ -30,13 +31,38 @@ class ModelUtils:
             return None
 
 class rnn_params:
-    rnn_type = 'gru'
-    input_dim = 1
-    hidden_dim = 32
-    num_layers = 2
+    rnn_type = 'lstm'
+    input_dim = 16
+    hidden_dim = 2048
+    num_layers = 1
     output_dim = 1
     n_epochs = 100
+    lr = 0.00001
+
+class transf_params:
+    n_layers = 11
+    num_heads = 12
+    model_dim = 16  # nr of features
+    forward_dim = 2048
+    output_dim = 1
+    dropout = 0
+    n_epochs = 100
     lr = 0.01
+
+class TransformerModel(nn.Module):
+    def __init__(self, params):
+        super(TransformerModel, self).__init__()
+        self.transf = transformer.TransformerModel(n_layers=params.n_layers,
+                                                   num_heads=params.num_heads,
+                                                   model_dim=params.model_dim,
+                                                   forward_dim=params.forward_dim,
+                                                   output_dim=16,
+                                                   dropout=params.dropout)
+        self.linear = nn.Linear(16, params.output_dim)
+    def forward(self, x):
+        transf_out = self.transf(x)
+        out = self.linear(transf_out)
+        return out
 
 
 class TorchRNN(nn.Module):
@@ -51,7 +77,9 @@ class TorchRNN(nn.Module):
             self.rnn = nn.GRU(input_dim, hidden_dim, num_layers, batch_first=True)
         else:
             raise KeyError('Invalid RNN type, select "lstm" or "gru"!')
-        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.fc1 = nn.Linear(hidden_dim, 64)
+        self.fc2 = nn.Linear(64, output_dim)
+        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).requires_grad_()
@@ -62,7 +90,8 @@ class TorchRNN(nn.Module):
             out, (hn) = self.rnn(x, (h0.detach()))
         else:
             raise KeyError('Invalid RNN type, select "lstm" or "gru"!')
-        out = self.fc(out[:, -1, :])
+        out = self.relu(self.fc1(out[:, -1, :]))
+        out = self.fc2(out)
         return out
 
 

@@ -10,6 +10,7 @@ sns.set_style('whitegrid')
 plt.style.use("fivethirtyeight")
 import random
 
+import indicators
 
 # Collect data from yahoo finance
 from pandas_datareader.data import DataReader
@@ -28,8 +29,6 @@ class config:
     # Starting of with google stocks
     stock_names_compare = ['GOOG', 'AAPL', 'MSFT', 'AMZN']
     stock_names = ['GOOG']
-
-    moving_averages = [int(np.floor(365 / 2)), int(np.floor(365 / 4)), 30, 14, 7]
 
     colors = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
               'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
@@ -59,9 +58,6 @@ def collect_data(timestamps, stock_name, moving_averages=None, include_gain=True
     '''
         Input: timestamps - start and end time of the time period to track time
                stock_name - code of the stock from the specific company
-               moving_averages - list of the time period to compute moving averages (default None)
-               invlude_gain - boolean if include the daily change of the stock price (default True)
-               compute_volatility - boolean if to compute the volatility from the daily return (default False)
 
         Output: Dataframe of the stock for the selected time period
     '''
@@ -74,27 +70,15 @@ def collect_data(timestamps, stock_name, moving_averages=None, include_gain=True
 
     df_stock = pd.concat(company_stock, axis=0)
 
-    if moving_averages is not None:
-        for ma in moving_averages:
-            if 3 * ma < len(df_stock):
-                ma_column_name = f"{ma} days MA"
-                df_stock[ma_column_name] = df_stock['Adj Close'].rolling(ma).mean()
-
-    if include_gain:
-        change = (df_stock['Adj Close'] / df_stock['Open']).tolist()
-        df_stock['Change %'] = change
-        df_stock['Daily Return'] = df_stock['Adj Close'].pct_change()
-
-        # Volatility is computed as the standard deviation of the daily return
-        if compute_volatility:
-            df_stock['Volatility (30 days)'] = df_stock['Daily Return'].rolling(30).std(ddof=0)
-
-            # Sharpe ratio is the daily return divided by the volatility
-            sharpe_ratio = (df_stock['Daily Return'] / df_stock['Volatility (30 days)']).tolist()
-            df_stock['Sharpe Ratio'] = sharpe_ratio
-
     return df_stock
 
+
+def preprocess_data(df):
+    if df.columns[0] == 'Date':
+        df = df.set_index('Date')
+
+    df = indicators.get_indicators(df)
+    return df
 
 
 
