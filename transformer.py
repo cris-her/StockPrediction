@@ -1,7 +1,6 @@
 '''
 Transformer script based on the work of A. Vaswani et. al. (2017) in
-"Attention is all you need" and inspired from the work of Frank Odom
-in https://medium.com/the-dl/transformers-from-scratch-in-pytorch-8777e346ca51
+"Attention is all you need"
 '''
 
 import torch
@@ -141,62 +140,6 @@ class Encoder(nn.Module):
         for _ in range(self.n_layers):
             att_out = self.multihead_attention(out, out, out)
             out = self.feed_forward(att_out)
-        return out
-
-
-class Decoder(nn.Module):
-    '''
-    The decoder of the transformer model, first computes the relative positions of the inputs, then feeds it into
-    the first multihead attention layer followed by the second multihead attention layer which inputs the output of the
-    encoder as the key and query matrices and the output of the first multihead attention layer as value matrix. This
-    output is then fed to a feed-forward layer, all of these with normalized residual connections, and the further fed
-    to the linear output layer.
-    '''
-
-    def __init__(self, n_layers=6, model_dim=512, output_dim=512, num_heads=8, forward_dim=2048, dropout=0.2):
-        super().__init__()
-
-        self.n_layers = n_layers
-        key_dim = model_dim // num_heads
-        value_dim = model_dim // num_heads
-
-        # First multihead attention layer
-        self.first_attention = ResidualConnection(
-            MultiHeadAttention(num_heads, model_dim, key_dim, value_dim),
-            dimension=model_dim,
-            dropout=dropout
-        )
-        # Second multihead attention layer
-        self.second_attention = ResidualConnection(
-            MultiHeadAttention(num_heads, model_dim, key_dim, value_dim),
-            dimension=model_dim,
-            dropout=dropout
-        )
-        # Feed-forward layer
-        self.feed_forward = ResidualConnection(
-            forward(model_dim, forward_dim),
-            dimension=model_dim,
-            dropout=dropout
-        )
-        # Linear output layer
-        self.linear = nn.Linear(model_dim, output_dim)
-
-    def forward(self, X_dec, Y_enc):
-        seq_len, dimension = X_dec.size(1), X_dec.size(2)
-        # Computes the positional encodings
-        X_dec += positioning_encoding(seq_len, dimension)
-
-        for _ in range(self.n_layers):
-            # All inputs to the first multihead attention layer
-            X_dec = self.first_attention(X_dec, X_dec, X_dec)
-            # Using the outputs of the encoder as the query and key matrices in
-            # the scaled dot product attention and the input as the value matrix
-            X_dec = self.second_attention(Y_enc, Y_enc, X_dec)
-            # Feeds the output to the feed forward layer
-            X_dec = self.feed_forward(X_dec)
-
-        # output linear layer
-        out = self.linear(X_dec)
         return out
 
 

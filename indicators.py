@@ -64,7 +64,7 @@ def ulcer_index(df: pd.DataFrame, lookback: int):
         else:
             maxprice = np.max(df['Close'][t_idx-lookback:t_idx].values)
             percentage_drawdown = [(df['Close'][t_idx-i]-maxprice)/maxprice * 100 for i in reversed(range(lookback))]
-            ulcer_ind = np.sqrt(sum(percentage_drawdown) / lookback)
+            ulcer_ind = np.sqrt(np.sum(np.array(percentage_drawdown)**2) / lookback)
             ui[t_idx] = ulcer_ind
     df['Ulcer_index'] = ui
     return df

@@ -24,12 +24,13 @@ class GetDataset(object):
 
 
 
-    def get_dataset(self, scale=True, stationary=False):
+    def get_dataset(self, scale=True, stationary=False, indicators=False):
         '''
             Input: scale - if to scale the input data
         '''
         x_df = self.df[["Close", "Open", "High", "Low", "Volume"]].dropna()[:-1]
         y_df = self.df["Next_day_closing_price"].dropna().fillna(0)
+
 
         x_processed_df = preprocess.preprocess_data(x_df).fillna(0)
         if stationary:
