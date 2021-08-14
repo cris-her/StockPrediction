@@ -89,11 +89,16 @@ The penultimate and last indicators are just the simple moving average (SMA) and
 ### 4.2 Results
 The result for using the LSTM model with the above indicators as additional input features is
 
-![lstm](https://github.com/olof98johansson/StockPrediction/blob/main/demonstration_images/lstm_results.png?raw=True)
+![lstm](https://github.com/olof98johansson/StockPrediction/blob/main/demonstration_images/lstm_predictions.png?raw=True)
+
+
+![lstmz](https://github.com/olof98johansson/StockPrediction/blob/main/demonstration_images/lstm_predictions_zoom.png?raw=True)
 
 
 ### 5 Transformer
 The [original paper](https://arxiv.org/abs/1706.03762) of the attention-based transformer model was published in 2017 and since then its popularity has explode. The model in [transformer.py](https://github.com/olof98johansson/StockPrediction/blob/main/transformer.py) is the implementation from the original paper, but here, only the encoder of the transformer model is used. This attention-based model uses positional encoding whose values represent the importance of the different input features in each time step, i.e which features that the model should pay more attention to. This along with multihead scaled dot product layers with residual connections and feed-forward linear bottleneck creates the transformer encoder. The results, with the additional indicators as for the lstm, for the transformer model is
 
-![transformer](https://github.com/olof98johansson/StockPrediction/blob/main/demonstration_images/transformer_results.png?raw=True)
+![transformer](https://github.com/olof98johansson/StockPrediction/blob/main/demonstration_images/transformer_predictions.png?raw=True)
+
+![transformerz](https://github.com/olof98johansson/StockPrediction/blob/main/demonstration_images/transformer_predictions_zoom.png?raw=True)
 
