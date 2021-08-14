@@ -6,7 +6,7 @@ This hobby project compares different methods for time series prediction on stoc
 3. LSTM model
 4. Attention-based Transformer model.
 
-The aim of the project is to demonstrate how build and use these different models on time series as well as a proof of concept that fancy deep learning models are not always necessary to do predictive analysis. 
+The aim of the project is to demonstrate how build and use these different models on time series and show their efficiency on it.
 
 Let's first begin with some analysis of the data!:)
 
