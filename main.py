@@ -59,4 +59,4 @@ def run(stock: str, model_type: str, stationary=True):
 
 if __name__ == '__main__':
     # visualization()
-    run('./Data/AMZN.csv', 'lstm', True)
+    run('./Data/AMZN.csv', 'transformer', True)

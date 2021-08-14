@@ -114,7 +114,7 @@ def plot_predictions(predictions, stock_name: str):
     predictions["Actual"].plot(figsize=(20, 8), legend=True, color="#81A6FF", linewidth=1)
     predictions["Predictions"].plot(legend=True, color="#C281FF", linewidth=1, figsize=(20, 8))
     plt.ylabel('USD $')
-    plt.title(f'SARIMAX predictions for "{stock_name}" stock with RMSE = {RMSE:.2f}')
+    plt.title(f'SARIMAX predictions for "{stock_name}" stock')
     plt.savefig('./demonstration_images/sarimax_predictions.png')
     plt.show()
 

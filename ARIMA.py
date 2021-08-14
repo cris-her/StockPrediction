@@ -139,7 +139,7 @@ class ARIMA(object):
         matplotlib.style.use('seaborn-darkgrid')
         RMSE = np.sqrt(mean_squared_error(df.iloc[self.train_size:, :]["Predicted"].values, df.iloc[self.train_size:, :]["Close"].values))
         df.iloc[self.train_size:, :][["Close", "Predicted"]].plot(figsize=(20, 8), xlabel='Date', ylabel='Price USD ($)',
-                                        title=f'Final predictions from ARIMA model for "{stock_name}" stock with RMSE = {RMSE:.2f}',
+                                        title=f'Final predictions from ARIMA model for "{stock_name}" stock',
                                         color=["#c6e2ff", "#deaddd"], linewidth=1.5)
         if save_plot:
             plt.savefig('./demonstration_images/arima_predictions.png')

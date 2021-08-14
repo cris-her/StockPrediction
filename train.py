@@ -89,8 +89,7 @@ def plot_predictions(df, train_data_size, predictions, model_name:str):
                    name='Predictions'))
 
     fig.update_layout(showlegend=True)
-    fig.update_layout(title=dict(text=f'Predictions of stock "{train["Company stock name"][0]}" from {x_val[0]} to {x_val[len(valid) - 1]}'+\
-                                 f' with RMSE = {RMSE:.2f}',
+    fig.update_layout(title=dict(text=f'Predictions of stock "{train["Company stock name"][0]}" from {x_val[0]} to {x_val[len(valid) - 1]}',
                                  xanchor='auto'),
                       xaxis=go.layout.XAxis(
                           title=go.layout.xaxis.Title(
