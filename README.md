@@ -1,3 +1,15 @@
+'''
+!pip install pandas
+!pip install matplotlib
+!pip install seaborn
+!pip install plotly
+!pip install pandas_datareader
+!pip install torch
+!pip install sklearn
+!pip install statsmodels
+!pip install -U kaleido
+'''
+
 <h1 align="center">Description</h1>
 This hobby project compares different methods for time series prediction on stock market data. The methods used are 
 
